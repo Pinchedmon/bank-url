@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  next-app:
+    container_name: next-app
+    build:
+      context: . # Собираем из текущей директории
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" # Пробрасываем порт 3000
+    volumes:
+      - .:/app # Монтируем код для разработки (чтобы изменения применялись без пересборки)
+      - /app/node_modules # Изолируем node_modules от хоста
+    environment:
+      - NODE_ENV=development # Для продакшена замените на `production`
+    restart: unless-stopped # Автоматически перезапускать контейнер при падении
