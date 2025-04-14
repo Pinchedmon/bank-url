@@ -1,74 +1,44 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { promises as fs } from "fs";
-import path from "path";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// app/api/profile/route.ts
+import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get("email");
-  if (!email) {
-    return NextResponse.json({ error: "Email обязателен" }, { status: 400 });
+const prisma = new PrismaClient();
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const clientId = searchParams.get("clientId");
+
+  if (!clientId) {
+    return NextResponse.json({ error: "Missing clientId" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
-
-  if (!user) {
+  try {
+    const profile = await prisma.client.findUnique({
+      where: { id: parseInt(clientId) },
+    });
+    return NextResponse.json(profile);
+  } catch (error) {
     return NextResponse.json(
-      { error: "Пользователь не найден" },
-      { status: 404 }
+      { error: "Failed to fetch profile" },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json(user, { status: 200 });
 }
 
-export async function PUT(req: NextRequest) {
+export async function PUT(request: Request) {
   try {
-    const formData = await req.formData();
+    const { clientId, fullName, email, phone } = await request.json();
 
-    const email = formData.get("email") as string;
-    const fullName = formData.get("fullName") as string;
-    const phone = formData.get("phone") as string;
-    const passportData = formData.get("passportData") as string;
-    const profileImageFile = formData.get("profileImage") as File | null;
-
-    if (!email) {
-      return NextResponse.json({ error: "Email обязателен" }, { status: 400 });
-    }
-
-    let profileImagePath = undefined;
-
-    // Если загружен файл, сохраняем его
-    if (profileImageFile) {
-      const arrayBuffer = await profileImageFile.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const newFileName = `${Date.now()}-${profileImageFile.name}`;
-      const uploadDir = path.join(process.cwd(), "public/uploads");
-      const filePath = path.join(uploadDir, newFileName);
-
-      // Убедимся, что папка существует
-      await fs.mkdir(uploadDir, { recursive: true });
-      await fs.writeFile(filePath, buffer);
-
-      profileImagePath = `/uploads/${newFileName}`;
-    }
-
-    const user = await prisma.user.update({
-      where: { email },
-      data: {
-        fullName,
-        phone,
-        passportData,
-        ...(profileImagePath && { profileImage: profileImagePath }),
-      },
+    const updatedProfile = await prisma.client.update({
+      where: { id: parseInt(clientId) },
+      data: { fullName, email, phone },
     });
 
-    return NextResponse.json(user, { status: 200 });
+    return NextResponse.json(updatedProfile);
   } catch (error) {
-    console.error("Ошибка при обновлении профиля:", error);
     return NextResponse.json(
-      { error: "Ошибка при обновлении профиля" },
+      { error: "Failed to update profile" },
       { status: 500 }
     );
   }

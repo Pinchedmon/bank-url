@@ -7,78 +7,67 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model User {
-  userId        Int            @id @default(autoincrement())
-  email         String         @unique
-  phone         String?        @unique
-  passwordHash  String
-  fullName      String?
-  passportData  String?
-  profileImage  String?
-  role          Role           @default(USER)
-  createdAt     DateTime       @default(now())
-  bookings      Booking[]
-  loyaltyPoints LoyaltyPoint[]
+model Client {
+  id           Int           @id @default(autoincrement())
+  fullName     String
+  email        String        @unique
+  phone        String
+  address      String
+  clientType   String        @default("INDIVIDUAL") // INDIVIDUAL или LEGAL_ENTITY
+  passwordHash String // Добавляем поле для пароля
+  roleId       Int
+  role         Role          @relation(fields: [roleId], references: [id])
+  applications Application[]
+  profileImage String?
 }
 
-model Flight {
-  flightId      Int          @id @default(autoincrement())
-  flightNumber  String
-  departureCity String
-  arrivalCity   String
-  departureTime DateTime
-  arrivalTime   DateTime
-  economySeats  Int
-  vipSeats      Int
-  economyPrice  Float
-  vipPrice      Float
-  status        FlightStatus @default(SCHEDULED)
-  bookings      Booking[]
+model Application {
+  id              Int               @id @default(autoincrement())
+  clientId        Int
+  client          Client            @relation(fields: [clientId], references: [id])
+  deviceId        Int?
+  device          Device?           @relation(fields: [deviceId], references: [id])
+  employeeId      Int?
+  employee        Employee?         @relation(fields: [employeeId], references: [id])
+  applicationDate DateTime          @default(now())
+  status          String            @default("PENDING") // PENDING, APPROVED, REJECTED
+  amountRequested Float
+  term            Int
+  monthlyPayment  Float?
+  conditions      CreditCondition[]
 }
 
-model Booking {
-  bookingId   Int           @id @default(autoincrement())
-  userId      Int
-  flightId    Int
-  class       Class
-  seatCount   Int
-  totalPrice  Float
-  pointsUsed  Int           @default(0)
-  status      BookingStatus @default(ACTIVE)
-  createdAt   DateTime      @default(now())
-  cancelledAt DateTime?
-  user        User          @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  flight      Flight        @relation(fields: [flightId], references: [flightId], onDelete: Cascade)
+model Device {
+  id           Int           @id @default(autoincrement())
+  position     String
+  phone        String
+  email        String
+  applications Application[]
 }
 
-model LoyaltyPoint {
-  pointId     Int      @id @default(autoincrement())
-  userId      Int
-  points      Int
-  description String?
-  addedAt     DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+model CreditCondition {
+  id             Int         @id @default(autoincrement())
+  applicationId  Int
+  application    Application @relation(fields: [applicationId], references: [id])
+  interestRate   Float
+  term           Int
+  monthlyPayment Float
 }
 
-enum Role {
-  USER
-  ADMIN
-  MODERATOR
+model Employee {
+  id           Int           @id @default(autoincrement())
+  fullName     String
+  email        String        @unique
+  phone        String
+  passwordHash String // Добавляем поле для пароля
+  roleId       Int
+  role         Role          @relation(fields: [roleId], references: [id])
+  applications Application[]
 }
 
-enum FlightStatus {
-  SCHEDULED
-  DEPARTED
-  DELAYED
-  CANCELLED
-}
-
-enum Class {
-  ECONOMY
-  VIP
-}
-
-enum BookingStatus {
-  ACTIVE
-  CANCELLED
+model Role {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique // CLIENT, EMPLOYEE, ADMIN, 
+  clients   Client[]
+  employees Employee[]
 }

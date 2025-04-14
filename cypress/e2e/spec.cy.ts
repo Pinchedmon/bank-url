@@ -1,9 +1,8 @@
-// cypress/e2e/bookings.cy.ts
-describe("Booking Flow", () => {
-  // Данные тестового пользователя из seed
-  const email = "user11@example.com";
-  const password = "hashed_password_0";
-  const fullName = "User 0";
+// cypress/e2e/applications.cy.ts
+describe("Loan Application Flow", () => {
+  // Данные тестового пользователя
+  const email = "client1@example.com";
+  const password = "password123";
 
   before(() => {
     // Очистка локального хранилища перед прогоном тестов
@@ -11,58 +10,77 @@ describe("Booking Flow", () => {
   });
 
   beforeEach(() => {
-    // Переход на главную страницу перед каждым тестом
-    cy.visit("/");
-  });
-
-  it("should login and book a flight", () => {
-    // Авторизация тестового пользователя
+    // Переход на главную страницу и авторизация
+    cy.visit("http://localhost:3000");
     cy.login(email, password);
-    cy.get("button").contains("Выйти").should("be.visible");
-
-    // Поиск и бронирование рейса из seed данных
-    cy.get('input[placeholder="Поиск по городам"]')
-      .type("City A0")
-      .should("have.value", "City A0");
-
-    // Фильтрация рейсов по статусу (опционально)
-    cy.get("select").first().select("SCHEDULED");
-
-    // Явное ожидание загрузки результатов
     cy.wait(1000);
+    // Проверка, что пользователь на странице личного кабинета
+    cy.url().should("include", "/client");
+    cy.get("h1").contains("Личный кабинет");
+  });
 
-    // Бронирование первого найденного рейса
-    cy.get("button").contains("Забронировать").first().click();
+  it("should create a loan application", () => {
+    // Переход на вкладку "Подать заявку"
+    cy.get("button").contains("Подать заявку").click();
 
-    // Проверка уведомления о успешном бронировании
+    // Заполнение формы заявки
+    cy.get('input[placeholder="Сумма кредита (руб.)"]').type("100000");
+    cy.get('input[placeholder="Срок (месяцев)"]').type("12");
+
+    // Отправка формы
+    cy.get("button").contains("Отправить заявку").click();
+
+    // Проверка уведомления об успешном создании
     cy.on("window:alert", (text) => {
-      expect(text).to.include("Рейс");
-      expect(text).to.include("успешно забронирован");
+      expect(text).to.include("Заявка");
+      expect(text).to.include("успешно создана");
     });
+
+    // Проверка отображения созданной заявки в таблице
+    cy.get("button").contains("Мои заявки").click();
+    cy.get("td").contains("100000").should("be.visible");
+    cy.get("td").contains("12").should("be.visible");
+    cy.get("td").contains("PENDING").should("be.visible");
   });
 
-  it("should view and cancel a booking", () => {
-    // Авторизация тестового пользователя
-    cy.login(email, password);
+  it("should update user profile", () => {
+    // Убедимся, что мы на вкладке профиля (она активна по умолчанию)
+    cy.get("button")
+      .contains("Профиль")
+      .should("have.attr", "aria-selected", "true");
 
-    // Переход в раздел бронирований
-    cy.get("a").contains("Мои бронирования").click();
-    cy.url().should("include", "/bookings");
+    // Новые данные для профиля
+    const newFullName = "Иван Иванов";
+    const newEmail = "client1@example.com";
+    const newPhone = "+79991234567";
 
-    // Отмена первого активного бронирования
-    cy.get("button").contains("Отменить").first().click();
+    // Обновление полей формы профиля
+    cy.get('input[placeholder="Full Name"]').clear().type(newFullName);
+    cy.get('input[placeholder="Email"]').clear().type(newEmail);
+    cy.get('input[placeholder="Phone"]').clear().type(newPhone);
 
-    // Проверка обновления статуса бронирования
-    cy.get("p").contains("CANCELLED").should("be.visible");
-    cy.get("p").contains("Дата отмены").should("be.visible");
+    // Подтверждение изменений
+    cy.get("button").contains("Сохранить изменения").click();
+
+    cy.reload();
+    cy.wait(1000);
+    // Проверка успешного обновления (предполагаем, что API возвращает обновленные данные)
+    cy.get('input[placeholder="Full Name"]').should("have.value", newFullName);
+    cy.get('input[placeholder="Email"]').should("have.value", newEmail);
+    cy.get('input[placeholder="Phone"]').should("have.value", newPhone);
+
+    // Дополнительная проверка через перезагрузку страницы
+    cy.reload();
+    cy.wait(1000);
+    cy.get('input[placeholder="Full Name"]').should("have.value", newFullName);
+    cy.get('input[placeholder="Email"]').should("have.value", newEmail);
+    cy.get('input[placeholder="Phone"]').should("have.value", newPhone);
   });
+});
 
-  it("should logout", () => {
-    // Авторизация и выход из системы
-    cy.login(email, password);
-    cy.get("button").contains("Выйти").click();
-
-    // Проверка возврата на страницу авторизации
-    cy.get("a").contains("Войти").should("be.visible");
-  });
+// Кастомная команда для логина
+Cypress.Commands.add("login", (email, password) => {
+  cy.get('input[placeholder="Email"]').type(email);
+  cy.get('input[placeholder="Пароль"]').type(password);
+  cy.get("button").contains("Войти").click();
 });

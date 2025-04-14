@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "Система бронирования",
-  description: "Бронирование авиабилетов",
+  title: "АИС Кредитования Банком",
+  description: "Система управления кредитованием",
 };
 
 export default function RootLayout({
@@ -13,8 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body className="container mx-auto bg-[#D1E5FF] text-[#354fae]">
+      <body className="container mx-auto">
         {children}
+        <Toaster />
       </body>
     </html>
   );

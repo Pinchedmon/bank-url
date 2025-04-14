@@ -1,93 +1,142 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.loyaltyPoint.deleteMany();
-  await prisma.booking.deleteMany();
-  await prisma.flight.deleteMany();
-  await prisma.user.deleteMany();
-  // USERS
-  const users = [];
-  for (let i = 0; i < 9; i++) {
-    const user = await prisma.user.create({
+  // Очистка базы данных
+  await prisma.creditCondition.deleteMany();
+  await prisma.application.deleteMany();
+  await prisma.device.deleteMany();
+  await prisma.employee.deleteMany();
+  await prisma.client.deleteMany();
+  await prisma.role.deleteMany();
+
+  // 1. Создание ролей (4 штуки)
+  const roles = await Promise.all([
+    prisma.role.create({ data: { name: "CLIENT" } }),
+    prisma.role.create({ data: { name: "EMPLOYEE" } }),
+    prisma.role.create({ data: { name: "ADMIN" } }),
+  ]);
+
+  // 2. Создание 12 клиентов (для входа используйте client1@example.com...client10@example.com, пароль: password123)
+  const clients = await Promise.all([
+    // Физические лица
+    ...Array.from({ length: 8 }, (_, i) =>
+      prisma.client.create({
+        data: {
+          fullName: `Клиент ${i + 1} Иванов`,
+          email: `client${i + 1}@example.com`,
+          phone: `+7999000000${i + 1}`,
+          address: `г. Москва, ул. Тестовая, д. ${i + 1}`,
+          clientType: "INDIVIDUAL",
+          passwordHash: bcrypt.hashSync("password123", 10),
+          roleId: roles.find((r) => r.name === "CLIENT").id,
+        },
+      })
+    ),
+    // Юридические лица
+    prisma.client.create({
       data: {
-        email: `user${i}@example.com`,
-        phone: `+7900123456${i}`,
-        passwordHash: `hashed_password_${i}`,
-        fullName: `User ${i}`,
-        passportData: `AB12345${i}`,
-        role: i === 0 ? "ADMIN" : "USER",
+        fullName: "ООО Ромашка",
+        email: "company1@example.com",
+        phone: "+79991112233",
+        address: "г. Москва, ул. Бизнесовая, д. 1",
+        clientType: "LEGAL_ENTITY",
+        passwordHash: bcrypt.hashSync("password123", 10),
+        roleId: roles.find((r) => r.name === "CLIENT").id,
       },
-    });
-    users.push(user);
-  }
-  const userWithKnownHash = await prisma.user.create({
-    data: {
-      email: "user11@example.com",
-      phone: "+790012345611",
-      passwordHash:
-        "$2b$10$NKUdkXzKSsmDgDP20yKtluy89sYwy7WP63voP8KrolTu8rzZCe7Uy", // Хешированный пароль
-      fullName: "User  10",
-      passportData: "AB1234511",
-      role: "USER",
-    },
-  });
-  users.push(userWithKnownHash);
-
-  // FLIGHTS
-  const flights = [];
-  for (let i = 0; i < 10; i++) {
-    const flight = await prisma.flight.create({
+    }),
+    prisma.client.create({
       data: {
-        flightNumber: `FL${1000 + i}`,
-        departureCity: `City A${i}`,
-        arrivalCity: `City B${i}`,
-        departureTime: new Date(Date.now() + (i + 1) * 3600000), // +i часов
-        arrivalTime: new Date(Date.now() + (i + 2) * 3600000),
-        economySeats: 100,
-        vipSeats: 20,
-        economyPrice: 199.99,
-        vipPrice: 899.99,
-        status: "SCHEDULED",
+        fullName: "ИП Сидоров",
+        email: "company2@example.com",
+        phone: "+79994445566",
+        address: "г. Казань, ул. Предпринимателей, д. 5",
+        clientType: "LEGAL_ENTITY",
+        passwordHash: bcrypt.hashSync("password123", 10),
+        roleId: roles.find((r) => r.name === "CLIENT").id,
       },
-    });
-    flights.push(flight);
-  }
+    }),
+  ]);
 
-  // BOOKINGS
-  for (let i = 0; i < 10; i++) {
-    const user = users[i % users.length];
-    const flight = flights[i % flights.length];
-    const seatClass = i % 2 === 0 ? "ECONOMY" : "VIP";
-    const seatCount = (i % 3) + 1;
-    const price =
-      seatClass === "ECONOMY" ? flight.economyPrice : flight.vipPrice;
-
-    await prisma.booking.create({
+  // 3. Создание 12 сотрудников (для входа используйте employee1@example.com...employee10@example.com, пароль: password123)
+  const employees = await Promise.all([
+    // Админы
+    prisma.employee.create({
       data: {
-        userId: user.userId,
-        flightId: flight.flightId,
-        class: seatClass,
-        seatCount,
-        totalPrice: price * seatCount,
-        pointsUsed: i * 5,
-        status: "ACTIVE",
+        fullName: "Главный Администратор",
+        email: "admin1@example.com",
+        phone: "+79998887766",
+        passwordHash: bcrypt.hashSync("password123", 10),
+        roleId: roles.find((r) => r.name === "ADMIN").id,
       },
-    });
-  }
+    }),
+    // Сотрудники
+    ...Array.from({ length: 8 }, (_, i) =>
+      prisma.employee.create({
+        data: {
+          fullName: `Сотрудник ${i + 1} Петров`,
+          email: `employee${i + 1}@example.com`,
+          phone: `+7999777000${i + 1}`,
+          passwordHash: bcrypt.hashSync("password123", 10),
+          roleId: roles.find((r) => r.name === "EMPLOYEE").id,
+        },
+      })
+    ),
+  ]);
 
-  // LOYALTY POINTS
-  for (let i = 0; i < 10; i++) {
-    await prisma.loyaltyPoint.create({
-      data: {
-        userId: users[i].userId,
-        points: (i + 1) * 11,
-        description: `Бонус за бронирование #${i + 1}`,
-      },
-    });
-  }
+  // 4. Создание 10 устройств (для тестирования)
+  const devices = await Promise.all(
+    Array.from({ length: 10 }, (_, i) =>
+      prisma.device.create({
+        data: {
+          position: i % 2 === 0 ? "Кредитный менеджер" : "Аналитик",
+          phone: `+799955500${i}`,
+          email: `device${i + 1}@example.com`,
+        },
+      })
+    )
+  );
 
-  console.log("✅ Seed completed without faker");
+  // 5. Создание 20 заявок
+  const applications = await Promise.all(
+    Array.from({ length: 20 }, (_, i) => {
+      const statuses = ["PENDING", "APPROVED", "REJECTED"];
+      return prisma.application.create({
+        data: {
+          clientId: clients[i % clients.length].id,
+          deviceId: devices[i % devices.length].id,
+          employeeId: employees[i % employees.length].id,
+          applicationDate: new Date(Date.now() - i * 86400000), // На разные даты
+          status: statuses[i % statuses.length],
+          amountRequested: [100000, 300000, 500000, 1000000][i % 4],
+          term: [6, 12, 24, 36][i % 4],
+          monthlyPayment: [5000, 15000, 25000, 35000][i % 4],
+        },
+      });
+    })
+  );
+
+  // 6. Создание условий кредита (15 записей)
+  await Promise.all(
+    Array.from({ length: 15 }, (_, i) =>
+      prisma.creditCondition.create({
+        data: {
+          applicationId: applications[i].id,
+          interestRate: [10, 12, 15, 8][i % 4],
+          term: [12, 24, 36, 6][i % 4],
+          monthlyPayment: [10000, 20000, 30000, 5000][i % 4],
+        },
+      })
+    )
+  );
+
+  console.log("База заполнена тестовыми данными!");
+  console.log("Доступные логины (пароль для всех: password123):");
+  console.log("- Клиенты: client1@example.com ... client10@example.com");
+  console.log("- Сотрудники: employee1@example.com ... employee10@example.com");
+  console.log("- Админы: admin1@example.com");
 }
 
 main()

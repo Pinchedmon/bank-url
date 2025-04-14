@@ -1,17 +1,186 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --primary: #6f96d1; /* Фон страниц и input */
-  --textPrimary: #354fae; /* Текст на фоне #FFFAF0 */
-  --bgSecondary: #ffffff; /* Фон контента */
+  --primary: oklch(
+    0.65 0.15 270
+  ); /* Глубокий сине-фиолетовый для фона и кнопок */
+  --textPrimary: oklch(0.95 0.02 270); /* Светлый текст для контраста */
+  --bgSecondary: oklch(0.98 0.01 270); /* Лёгкий фон для контента */
+  --radius: 0.75rem; /* Более мягкие углы */
+  --background: oklch(0.92 0.02 270); /* Основной фон страниц */
+  --foreground: oklch(0.2 0.05 270); /* Тёмный текст для читаемости */
+  --card: oklch(1 0 0); /* Белый фон для карточек */
+  --card-foreground: oklch(0.2 0.05 270); /* Тёмный текст на карточках */
+  --popover: oklch(1 0 0); /* Белый фон для попапов */
+  --popover-foreground: oklch(0.2 0.05 270); /* Тёмный текст в попапах */
+  --primary-foreground: oklch(
+    0.98 0.01 270
+  ); /* Светлый текст на основном фоне */
+  --secondary: oklch(0.85 0.1 200); /* Мягкий голубой для акцентов */
+  --secondary-foreground: oklch(
+    0.2 0.05 270
+  ); /* Тёмный текст на второстепенном фоне */
+  --muted: oklch(0.9 0.03 270); /* Приглушённый фон для неактивных элементов */
+  --muted-foreground: oklch(
+    0.6 0.05 270
+  ); /* Серый текст для приглушённых элементов */
+  --accent: oklch(0.75 0.12 320); /* Розовато-фиолетовый акцент */
+  --accent-foreground: oklch(0.98 0.01 270); /* Светлый текст для акцентов */
+  --destructive: oklch(0.6 0.2 0); /* Красный для удаления/ошибок */
+  --border: oklch(0.85 0.03 270); /* Лёгкая граница */
+  --input: oklch(0.98 0.01 270); /* Фон полей ввода */
+  --ring: oklch(0.7 0.15 270); /* Цвет обводки при фокусе */
+  --chart-1: oklch(0.7 0.15 270); /* Синий для графиков */
+  --chart-2: oklch(0.65 0.12 200); /* Голубой для графиков */
+  --chart-3: oklch(0.6 0.15 320); /* Фиолетовый для графиков */
+  --chart-4: oklch(0.75 0.1 90); /* Зелёный для графиков */
+  --chart-5: oklch(0.7 0.12 50); /* Жёлтый для графиков */
+  --sidebar: oklch(0.98 0.01 270); /* Светлый фон боковой панели */
+  --sidebar-foreground: oklch(
+    0.2 0.05 270
+  ); /* Тёмный текст на боковой панели */
+  --sidebar-primary: oklch(0.65 0.15 270); /* Основной цвет боковой панели */
+  --sidebar-primary-foreground: oklch(0.98 0.01 270); /* Светлый текст */
+  --sidebar-accent: oklch(0.75 0.12 320); /* Акцент боковой панели */
+  --sidebar-accent-foreground: oklch(0.98 0.01 270); /* Светлый текст акцента */
+  --sidebar-border: oklch(0.85 0.03 270); /* Граница боковой панели */
+  --sidebar-ring: oklch(0.7 0.15 270); /* Обводка боковой панели */
 }
 
 @theme inline {
   --color-primary: var(--primary);
   --color-textPrimary: var(--textPrimary);
   --color-bgSecondary: var(--bgSecondary);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 body {
   @apply bg-[--primary] text-[--textPrimary];
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)];
+    font-family: "Inter", sans-serif;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-bold tracking-tight;
+  }
+
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-[var(--radius)] font-medium transition-all duration-200 ease-in-out;
+    @apply hover:shadow-md hover:-translate-y-0.5;
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  .btn-destructive {
+    @apply bg-[var(--destructive)] text-white;
+    @apply hover:bg-[var(--destructive)]/90;
+  }
+
+  .card {
+    @apply bg-[var(--card)] rounded-[var(--radius)] shadow-lg p-6;
+    @apply border border-[var(--border)];
+    @apply transition-all duration-200 hover:shadow-xl;
+  }
+
+  .input {
+    @apply bg-[var(--input)] border border-[var(--border)] rounded-[var(--radius)];
+    @apply focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent;
+    @apply pl-10 py-2 transition-all duration-200;
+  }
+
+  .form-container {
+    @apply bg-gradient-to-br from-[var(--secondary)]/20 to-[var(--accent)]/20;
+    @apply p-8 rounded-[var(--radius)] shadow-2xl;
+  }
 }
