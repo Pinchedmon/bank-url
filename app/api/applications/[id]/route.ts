@@ -7,11 +7,13 @@ const prisma = new PrismaClient();
 // Получение одной заявки
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
+    const { id } = context.params;
+
     const application = await prisma.application.findUnique({
-      where: { id: parseInt(params.id) },
+      where: { id: Number(id) },
       include: {
         client: true,
         device: true,
@@ -37,51 +39,18 @@ export async function GET(
   }
 }
 
-// Создание заявки (должно быть в app/api/applications/route.ts)
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { clientId, amountRequested, term, deviceId } = body;
-
-    if (!clientId || !amountRequested || !term) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
-
-    const application = await prisma.application.create({
-      data: {
-        clientId: Number(clientId),
-        amountRequested: Number(amountRequested),
-        term: Number(term),
-        status: "PENDING",
-        deviceId: deviceId ? Number(deviceId) : null,
-        applicationDate: new Date(),
-      },
-    });
-
-    return NextResponse.json(application, { status: 201 });
-  } catch (error) {
-    console.error("Error creating application:", error);
-    return NextResponse.json(
-      { error: "Failed to create application" },
-      { status: 500 }
-    );
-  }
-}
-
 // Обновление заявки
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
+    const { id } = context.params;
     const body = await request.json();
     const { status, amountRequested, term, employeeId } = body;
 
     const application = await prisma.application.update({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       data: {
         status,
         amountRequested: amountRequested ? Number(amountRequested) : undefined,
@@ -103,11 +72,13 @@ export async function PUT(
 // Удаление заявки
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
+    const { id } = context.params;
+
     await prisma.application.delete({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
     });
 
     return NextResponse.json(
